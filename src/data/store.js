@@ -15,6 +15,16 @@ const SECTORES = {
   BARRA: 'barra',
 };
 
+// Transiciones de estado que tienen sentido para una mesa de salon.
+// Ej: no se puede pedir la cuenta de una mesa libre, ni reservar una que
+// ya esta ocupada.
+const TRANSICIONES_VALIDAS = {
+  [ESTADOS_MESA.LIBRE]: [ESTADOS_MESA.OCUPADA, ESTADOS_MESA.RESERVADA],
+  [ESTADOS_MESA.RESERVADA]: [ESTADOS_MESA.OCUPADA, ESTADOS_MESA.LIBRE],
+  [ESTADOS_MESA.OCUPADA]: [ESTADOS_MESA.CUENTA_PEDIDA, ESTADOS_MESA.LIBRE],
+  [ESTADOS_MESA.CUENTA_PEDIDA]: [ESTADOS_MESA.LIBRE, ESTADOS_MESA.OCUPADA],
+};
+
 // Menu base usado para generar los pedidos de ejemplo en el seed.
 const MENU = [
   { nombre: 'Milanesa con papas fritas', precio: 8500 },
@@ -76,6 +86,10 @@ let siguientePedidoId = 1;
 
 function buscarMesa(numero) {
   return mesas.find((m) => m.numero === numero);
+}
+
+function pedidosAbiertosDeMesa(numero) {
+  return pedidos.filter((p) => p.mesaNumero === numero && p.abierto);
 }
 
 function crearItemsPedido(especificacion) {
@@ -147,8 +161,11 @@ function seed() {
 module.exports = {
   ESTADOS_MESA,
   SECTORES,
+  TRANSICIONES_VALIDAS,
   MENU,
   mesas,
   pedidos,
   seed,
+  buscarMesa,
+  pedidosAbiertosDeMesa,
 };
