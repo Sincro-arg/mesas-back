@@ -16,10 +16,15 @@ describe('modelo de datos en memoria', () => {
     });
   });
 
-  it('genera pedidos abiertos con items y total calculado', () => {
+  it('genera pedidos con items y total calculado', () => {
     expect(pedidos.length).toBeGreaterThan(0);
+    // Hay de los DOS tipos: abiertos (las mesas que estan comiendo) y cerrados
+    // (lo que ya se cobro esta noche). Sin cerrados, el facturado y el ticket
+    // promedio arrancan en cero y el panel no dice nada util.
+    expect(pedidos.some((p) => p.abierto)).toBe(true);
+    expect(pedidos.some((p) => !p.abierto)).toBe(true);
+
     pedidos.forEach((pedido) => {
-      expect(pedido.abierto).toBe(true);
       expect(pedido.items.length).toBeGreaterThan(0);
       const totalEsperado = pedido.items.reduce(
         (acc, item) => acc + item.precio * item.cantidad,
