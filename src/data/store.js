@@ -92,6 +92,14 @@ function pedidosAbiertosDeMesa(numero) {
   return pedidos.filter((p) => p.mesaNumero === numero && p.abierto);
 }
 
+function pedidosAbiertos() {
+  return pedidos.filter((p) => p.abierto);
+}
+
+function buscarPedido(id) {
+  return pedidos.find((p) => p.id === id);
+}
+
 function crearItemsPedido(especificacion) {
   return especificacion.map(([nombre, cantidad]) => {
     const { precio } = itemMenu(nombre);
@@ -167,5 +175,8 @@ module.exports = {
   pedidos,
   seed,
   buscarMesa,
+  buscarPedido,
   pedidosAbiertosDeMesa,
+  pedidosAbiertos,
+  crearPedido,
 };
