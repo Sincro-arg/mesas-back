@@ -65,6 +65,20 @@ describe('POST /api/pedidos', () => {
     expect(res.body).toHaveProperty('error');
   });
 
+  it('400 cuando items viene vacio', async () => {
+    const res = await request(app).post('/api/pedidos').send({ mesaNumero: 2, items: [] });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('400 cuando un item tiene el nombre vacio', async () => {
+    const res = await request(app)
+      .post('/api/pedidos')
+      .send({ mesaNumero: 2, items: [{ nombre: '  ', cantidad: 1 }] });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
   it('400 cuando un item tiene cantidad invalida', async () => {
     const res = await request(app)
       .post('/api/pedidos')
