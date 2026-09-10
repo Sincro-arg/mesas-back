@@ -9,6 +9,7 @@ const {
   pedidosAbiertosDeMesa,
   pedidosAbiertos,
   crearPedido,
+  metricas,
 } = require('./data/store');
 
 const app = express();
@@ -126,6 +127,10 @@ app.post('/api/pedidos/:id/cerrar', (req, res) => {
   }
 
   res.json(pedido);
+});
+
+app.get('/api/metricas', (req, res) => {
+  res.json(metricas());
 });
 
 module.exports = app;

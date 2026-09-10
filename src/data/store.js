@@ -166,6 +166,49 @@ function seed() {
   });
 }
 
+function pedidosCerrados() {
+  return pedidos.filter((p) => !p.abierto);
+}
+
+function mesasOcupadas() {
+  return mesas.filter((m) => m.estado === ESTADOS_MESA.OCUPADA).length;
+}
+
+function facturadoDelDia() {
+  return pedidosCerrados().reduce((acc, p) => acc + p.total, 0);
+}
+
+function ticketPromedio() {
+  const cerrados = pedidosCerrados();
+  if (cerrados.length === 0) return 0;
+  return facturadoDelDia() / cerrados.length;
+}
+
+// Pedidos totales (abiertos + cerrados) de las mesas del sector, dividido
+// la cantidad de mesas de ese sector: cuantas veces "roto" cada mesa en
+// promedio desde el arranque.
+function rotacionPorSector() {
+  const resultado = {};
+  Object.values(SECTORES).forEach((sector) => {
+    const numerosDelSector = new Set(
+      mesas.filter((m) => m.sector === sector).map((m) => m.numero)
+    );
+    const cantidadMesas = numerosDelSector.size;
+    const pedidosDelSector = pedidos.filter((p) => numerosDelSector.has(p.mesaNumero));
+    resultado[sector] = cantidadMesas === 0 ? 0 : pedidosDelSector.length / cantidadMesas;
+  });
+  return resultado;
+}
+
+function metricas() {
+  return {
+    mesasOcupadas: mesasOcupadas(),
+    ticketPromedio: ticketPromedio(),
+    facturadoDelDia: facturadoDelDia(),
+    rotacionPorSector: rotacionPorSector(),
+  };
+}
+
 module.exports = {
   ESTADOS_MESA,
   SECTORES,
@@ -178,5 +221,7 @@ module.exports = {
   buscarPedido,
   pedidosAbiertosDeMesa,
   pedidosAbiertos,
+  pedidosCerrados,
   crearPedido,
+  metricas,
 };
