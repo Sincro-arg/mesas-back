@@ -1,0 +1,154 @@
+// Modelo de datos en memoria: mesas, pedidos y estados.
+// Los endpoints consumen las funciones exportadas de aca, nunca deberian
+// reasignar los arrays directamente (usar los metodos que mutan en su lugar).
+
+const ESTADOS_MESA = {
+  LIBRE: 'libre',
+  OCUPADA: 'ocupada',
+  RESERVADA: 'reservada',
+  CUENTA_PEDIDA: 'cuenta-pedida',
+};
+
+const SECTORES = {
+  SALON: 'salon',
+  PATIO: 'patio',
+  BARRA: 'barra',
+};
+
+// Menu base usado para generar los pedidos de ejemplo en el seed.
+const MENU = [
+  { nombre: 'Milanesa con papas fritas', precio: 8500 },
+  { nombre: 'Empanada de carne', precio: 900 },
+  { nombre: 'Pizza muzzarella', precio: 7200 },
+  { nombre: 'Ensalada mixta', precio: 3200 },
+  { nombre: 'Cerveza artesanal', precio: 2800 },
+  { nombre: 'Agua mineral', precio: 1200 },
+  { nombre: 'Bife de chorizo', precio: 12000 },
+  { nombre: 'Pastas caseras', precio: 6800 },
+  { nombre: 'Copa de vino', precio: 2500 },
+  { nombre: 'Flan casero', precio: 2200 },
+];
+
+function itemMenu(nombre) {
+  const item = MENU.find((m) => m.nombre === nombre);
+  if (!item) {
+    throw new Error(`Item de menu inexistente: ${nombre}`);
+  }
+  return item;
+}
+
+// 24 mesas realistas distribuidas en tres sectores.
+function mesasIniciales() {
+  return [
+    // Salon (12 mesas)
+    { numero: 1, capacidad: 2, sector: SECTORES.SALON },
+    { numero: 2, capacidad: 2, sector: SECTORES.SALON },
+    { numero: 3, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 4, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 5, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 6, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 7, capacidad: 6, sector: SECTORES.SALON },
+    { numero: 8, capacidad: 6, sector: SECTORES.SALON },
+    { numero: 9, capacidad: 2, sector: SECTORES.SALON },
+    { numero: 10, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 11, capacidad: 4, sector: SECTORES.SALON },
+    { numero: 12, capacidad: 8, sector: SECTORES.SALON },
+    // Patio (8 mesas)
+    { numero: 13, capacidad: 4, sector: SECTORES.PATIO },
+    { numero: 14, capacidad: 4, sector: SECTORES.PATIO },
+    { numero: 15, capacidad: 2, sector: SECTORES.PATIO },
+    { numero: 16, capacidad: 2, sector: SECTORES.PATIO },
+    { numero: 17, capacidad: 6, sector: SECTORES.PATIO },
+    { numero: 18, capacidad: 4, sector: SECTORES.PATIO },
+    { numero: 19, capacidad: 2, sector: SECTORES.PATIO },
+    { numero: 20, capacidad: 4, sector: SECTORES.PATIO },
+    // Barra (4 mesas)
+    { numero: 21, capacidad: 2, sector: SECTORES.BARRA },
+    { numero: 22, capacidad: 2, sector: SECTORES.BARRA },
+    { numero: 23, capacidad: 2, sector: SECTORES.BARRA },
+    { numero: 24, capacidad: 2, sector: SECTORES.BARRA },
+  ].map((mesa) => ({ ...mesa, estado: ESTADOS_MESA.LIBRE }));
+}
+
+const mesas = mesasIniciales();
+const pedidos = [];
+let siguientePedidoId = 1;
+
+function buscarMesa(numero) {
+  return mesas.find((m) => m.numero === numero);
+}
+
+function crearItemsPedido(especificacion) {
+  return especificacion.map(([nombre, cantidad]) => {
+    const { precio } = itemMenu(nombre);
+    return { nombre, cantidad, precio };
+  });
+}
+
+function totalPedido(items) {
+  return items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+}
+
+function crearPedido(mesaNumero, especificacionItems) {
+  const items = crearItemsPedido(especificacionItems);
+  const pedido = {
+    id: siguientePedidoId++,
+    mesaNumero,
+    items,
+    total: totalPedido(items),
+    abierto: true,
+    creadoEn: new Date().toISOString(),
+  };
+  pedidos.push(pedido);
+  return pedido;
+}
+
+// Genera mesas ocupadas/reservadas/con cuenta pedida con pedidos abiertos
+// distribuidos entre los tres sectores. Se corre una vez al arrancar el
+// servidor para tener datos de ejemplo realistas.
+function seed() {
+  mesas.length = 0;
+  mesas.push(...mesasIniciales());
+  pedidos.length = 0;
+  siguientePedidoId = 1;
+
+  const ocupadas = [
+    [1, [['Milanesa con papas fritas', 1], ['Cerveza artesanal', 2]]],
+    [3, [['Pizza muzzarella', 1], ['Agua mineral', 2]]],
+    [5, [['Bife de chorizo', 1], ['Copa de vino', 2], ['Flan casero', 1]]],
+    [7, [['Pastas caseras', 2], ['Agua mineral', 1]]],
+    [11, [['Empanada de carne', 4], ['Cerveza artesanal', 1]]],
+    [14, [['Ensalada mixta', 1], ['Milanesa con papas fritas', 1], ['Agua mineral', 2]]],
+    [16, [['Pizza muzzarella', 2], ['Cerveza artesanal', 2]]],
+    [20, [['Bife de chorizo', 2], ['Copa de vino', 2]]],
+    [22, [['Empanada de carne', 2], ['Cerveza artesanal', 1]]],
+  ];
+
+  ocupadas.forEach(([mesaNumero, especificacionItems]) => {
+    crearPedido(mesaNumero, especificacionItems);
+    buscarMesa(mesaNumero).estado = ESTADOS_MESA.OCUPADA;
+  });
+
+  const conCuentaPedida = [
+    [18, [['Bife de chorizo', 1], ['Copa de vino', 1]]],
+    [24, [['Empanada de carne', 3], ['Agua mineral', 1]]],
+  ];
+
+  conCuentaPedida.forEach(([mesaNumero, especificacionItems]) => {
+    crearPedido(mesaNumero, especificacionItems);
+    buscarMesa(mesaNumero).estado = ESTADOS_MESA.CUENTA_PEDIDA;
+  });
+
+  [9, 19].forEach((mesaNumero) => {
+    buscarMesa(mesaNumero).estado = ESTADOS_MESA.RESERVADA;
+  });
+}
+
+module.exports = {
+  ESTADOS_MESA,
+  SECTORES,
+  MENU,
+  mesas,
+  pedidos,
+  seed,
+};
