@@ -164,6 +164,30 @@ function seed() {
   [9, 19].forEach((mesaNumero) => {
     buscarMesa(mesaNumero).estado = ESTADOS_MESA.RESERVADA;
   });
+
+  // Los que YA se cobraron esta noche, y las mesas quedaron libres.
+  //
+  // Sin esto, `facturadoDelDia` y `ticketPromedio` arrancan en cero. El calculo
+  // no esta mal —solo cuenta pedidos cerrados, que es lo correcto: facturado es
+  // lo cobrado, no lo que todavia esta en la mesa— pero un panel de sala que
+  // muestra el ticket promedio en cero no le sirve a nadie. El encargado quiere
+  // ver como viene la noche, y a las nueve ya se cobraron mesas.
+  const yaCobrados = [
+    [2, [['Pizza muzzarella', 1], ['Cerveza artesanal', 2]]],
+    [4, [['Milanesa con papas fritas', 2], ['Agua mineral', 2], ['Flan casero', 2]]],
+    [6, [['Empanada de carne', 6], ['Cerveza artesanal', 3]]],
+    [12, [['Bife de chorizo', 2], ['Copa de vino', 3], ['Flan casero', 1]]],
+    [15, [['Pastas caseras', 1], ['Agua mineral', 1]]],
+    [21, [['Ensalada mixta', 2], ['Copa de vino', 1]]],
+  ];
+
+  yaCobrados.forEach(([mesaNumero, especificacionItems]) => {
+    const pedido = crearPedido(mesaNumero, especificacionItems);
+    pedido.abierto = false;
+    // La mesa vuelve a LIBRE: se cobro y se fueron. El estado tiene que quedar
+    // coherente con el pedido, o el panel muestra una mesa ocupada sin nada.
+    buscarMesa(mesaNumero).estado = ESTADOS_MESA.LIBRE;
+  });
 }
 
 function pedidosCerrados() {
